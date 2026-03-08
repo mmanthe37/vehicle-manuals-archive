@@ -1,0 +1,16 @@
+adapters:
+  - id: mock_oem
+    module: services.ingestion.adapters.mock_oem
+    class: MockOemAdapter
+    enabled: true
+    schedule: "0 2 * * *"
+    description: "Mock OEM adapter for local development and testing"
+
+  # Template for real OEM adapters:
+  # - id: toyota_us
+  #   module: services.ingestion.adapters.toyota_us
+  #   class: ToyotaUsAdapter
+  #   enabled: false
+  #   schedule: "0 3 * * 0"   # weekly
+  #   crawl_delay: 3.0
+  #   description: "Toyota USA owner manuals portal"

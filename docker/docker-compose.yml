@@ -1,0 +1,258 @@
+version: "3.9"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # -----------------------------------------------------------------------
+  # Infrastructure
+  # -----------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      retries: 5
+    logging: *default-logging
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: vmw
+      POSTGRES_USER: vmw
+      POSTGRES_PASSWORD: vmwpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vmw"]
+      interval: 10s
+      retries: 5
+    logging: *default-logging
+
+  opensearch:
+    image: opensearchproject/opensearch:2.13.0
+    environment:
+      discovery.type: single-node
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: Admin@vmw1234
+      plugins.security.disabled: "true"
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - os_data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -v red"]
+      interval: 15s
+      retries: 10
+    logging: *default-logging
+
+  redpanda:
+    image: redpandadata/redpanda:v24.1.1
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --smp 1
+      - --memory 512M
+      - --mode dev-container
+    ports:
+      - "19092:19092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health"]
+      interval: 10s
+      retries: 5
+    logging: *default-logging
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    logging: *default-logging
+
+  prometheus:
+    image: prom/prometheus:v2.51.1
+    volumes:
+      - ../ops/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    logging: *default-logging
+
+  grafana:
+    image: grafana/grafana:10.4.1
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../ops/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+    logging: *default-logging
+
+  # -----------------------------------------------------------------------
+  # Airflow (minimal, scheduler + webserver)
+  # -----------------------------------------------------------------------
+  airflow-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+    volumes:
+      - airflow_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      retries: 10
+
+  airflow-init:
+    image: apache/airflow:2.9.1
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    command: db migrate
+    restart: "no"
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      VMW_MINIO_ENDPOINT: http://minio:9000
+      VMW_PG_DSN: postgresql://vmw:vmwpass@postgres:5432/vmw
+      VMW_OPENSEARCH_HOST: http://opensearch:9200
+      VMW_KAFKA_BOOTSTRAP: redpanda:9092
+    volumes:
+      - ../services/workflows/dags:/opt/airflow/dags
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname \"$${HOSTNAME}\""]
+      interval: 30s
+      retries: 5
+    logging: *default-logging
+
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__WEBSERVER__SECRET_KEY: vmw-dev-secret
+    volumes:
+      - ../services/workflows/dags:/opt/airflow/dags
+    ports:
+      - "8080:8080"
+    command: webserver
+    logging: *default-logging
+
+  # -----------------------------------------------------------------------
+  # Application services
+  # -----------------------------------------------------------------------
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    environment:
+      VMW_MINIO_ENDPOINT: http://minio:9000
+      VMW_PG_DSN: postgresql://vmw:vmwpass@postgres:5432/vmw
+      VMW_OPENSEARCH_HOST: http://opensearch:9200
+      VMW_KAFKA_BOOTSTRAP: redpanda:9092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - minio
+      - opensearch
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health"]
+      interval: 15s
+      retries: 5
+    logging: *default-logging
+
+  worker-ingest:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      WORKER_TYPE: ingestion
+      VMW_MINIO_ENDPOINT: http://minio:9000
+      VMW_PG_DSN: postgresql://vmw:vmwpass@postgres:5432/vmw
+      VMW_KAFKA_BOOTSTRAP: redpanda:9092
+    depends_on:
+      - postgres
+      - minio
+      - redpanda
+    logging: *default-logging
+
+  worker-parse:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      WORKER_TYPE: parse
+      VMW_MINIO_ENDPOINT: http://minio:9000
+      VMW_PG_DSN: postgresql://vmw:vmwpass@postgres:5432/vmw
+      VMW_KAFKA_BOOTSTRAP: redpanda:9092
+    depends_on:
+      - postgres
+      - minio
+      - redpanda
+    logging: *default-logging
+
+  worker-index:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      WORKER_TYPE: indexer
+      VMW_MINIO_ENDPOINT: http://minio:9000
+      VMW_PG_DSN: postgresql://vmw:vmwpass@postgres:5432/vmw
+      VMW_OPENSEARCH_HOST: http://opensearch:9200
+      VMW_KAFKA_BOOTSTRAP: redpanda:9092
+    depends_on:
+      - opensearch
+      - postgres
+      - redpanda
+    logging: *default-logging
+
+volumes:
+  minio_data:
+  pg_data:
+  os_data:
+  redpanda_data:
+  grafana_data:
+  airflow_db:

@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "vmw-api"
+    static_configs:
+      - targets: ["api:8000"]
+    metrics_path: /metrics
+
+  - job_name: "vmw-worker-ingest"
+    static_configs:
+      - targets: ["worker-ingest:9091"]
+
+  - job_name: "vmw-worker-parse"
+    static_configs:
+      - targets: ["worker-parse:9091"]
+
+  - job_name: "vmw-worker-index"
+    static_configs:
+      - targets: ["worker-index:9091"]
+
+  - job_name: "opensearch"
+    static_configs:
+      - targets: ["opensearch:9600"]
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
