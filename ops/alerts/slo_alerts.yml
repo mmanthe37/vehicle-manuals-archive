@@ -1,0 +1,36 @@
+groups:
+  - name: vmw-ingestion-slos
+    rules:
+      - alert: IngestSuccessRateLow
+        expr: |
+          rate(vmw_ingest_success_total[5m])
+          / (rate(vmw_ingest_success_total[5m]) + rate(vmw_ingest_failure_total[5m])) < 0.95
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ingestion success rate below 95%"
+
+      - alert: ParseLatencyHigh
+        expr: histogram_quantile(0.95, rate(vmw_parse_duration_seconds_bucket[5m])) > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 parse latency > 60 seconds"
+
+      - alert: IndexLagHigh
+        expr: vmw_index_lag_seconds > 300
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Index lag > 5 minutes"
+
+      - alert: ApiSearchLatencyHigh
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{handler="/search/text"}[5m])) > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Search API p95 latency > 300ms"
