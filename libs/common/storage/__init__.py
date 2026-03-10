@@ -1,4 +1,5 @@
 """Content-addressable S3/MinIO storage client."""
+
 from __future__ import annotations
 
 import hashlib
@@ -80,6 +81,7 @@ class StorageClient:
         if ep == "":
             return True
         from urllib.parse import urlparse
+
         parsed = urlparse(ep)
         hostname = parsed.hostname or ""
         return hostname == "amazonaws.com" or hostname.endswith(".amazonaws.com")

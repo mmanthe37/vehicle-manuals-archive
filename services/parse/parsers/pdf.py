@@ -1,4 +1,5 @@
 """PDF parser: PyMuPDF primary, pdfminer.six fallback."""
+
 from __future__ import annotations
 
 import io

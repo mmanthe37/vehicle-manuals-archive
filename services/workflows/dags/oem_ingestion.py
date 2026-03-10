@@ -3,6 +3,7 @@
 Workflow:
     seed_discovery → fetch_documents → store_blobs → parse_documents → index_documents
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta

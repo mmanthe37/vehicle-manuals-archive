@@ -1,4 +1,5 @@
 """Text and semantic search endpoints."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter

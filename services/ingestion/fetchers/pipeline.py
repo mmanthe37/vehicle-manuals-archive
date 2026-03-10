@@ -1,4 +1,5 @@
 """Core ingestion pipeline: fetch → deduplicate → store → emit CDC events."""
+
 from __future__ import annotations
 
 import hashlib
@@ -123,7 +124,9 @@ class IngestionPipeline:
             parse_queued=True,
         )
 
-    def _upsert_document(self, req: IngestRequest, sha256: str, logical_id: str, size_bytes: int, mime_type: str) -> None:
+    def _upsert_document(
+        self, req: IngestRequest, sha256: str, logical_id: str, size_bytes: int, mime_type: str
+    ) -> None:
         from sqlalchemy import select
 
         from libs.common.db import Document

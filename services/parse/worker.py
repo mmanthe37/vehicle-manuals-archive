@@ -1,4 +1,5 @@
 """Parse worker: consumes parse jobs from Kafka and runs PDF/OCR pipeline."""
+
 from __future__ import annotations
 
 import asyncio
@@ -42,6 +43,7 @@ async def _handle_message(payload: dict) -> None:
     data = payload.get("data", b"")
     if isinstance(data, str):
         import base64
+
         data = base64.b64decode(data)
     result = parse_pdf(data, content_id)
     logger.info("parse_done", content_id=content_id, pages=result.page_count)

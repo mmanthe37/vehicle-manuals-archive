@@ -1,4 +1,5 @@
 """CDC / event envelope schemas."""
+
 from __future__ import annotations
 
 import enum

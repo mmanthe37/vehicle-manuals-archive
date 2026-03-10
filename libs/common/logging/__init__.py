@@ -1,4 +1,5 @@
 """Structured logging with request/content ID correlation."""
+
 from __future__ import annotations
 
 import logging
@@ -25,9 +26,7 @@ def configure_logging(level: str = "INFO", json: bool = True) -> None:
 
     structlog.configure(
         processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(
-            logging.getLevelName(level)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(logging.getLevelName(level)),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
         cache_logger_on_first_use=True,

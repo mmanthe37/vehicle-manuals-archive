@@ -1,4 +1,5 @@
 """FastAPI application for the vehicle-manuals-archive internal API."""
+
 from __future__ import annotations
 
 from contextlib import asynccontextmanager

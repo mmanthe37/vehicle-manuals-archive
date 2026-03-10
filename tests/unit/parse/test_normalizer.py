@@ -1,4 +1,5 @@
 """Unit tests for normalizer (make/model/year/lang)."""
+
 from __future__ import annotations
 
 from services.parse.enrichment.normalizer import (

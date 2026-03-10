@@ -1,4 +1,5 @@
 """Ingest endpoints: POST /ingest/url and POST /ingest/upload."""
+
 from __future__ import annotations
 
 import hashlib

@@ -4,6 +4,7 @@ Each OEM site gets its own adapter subclass that implements the discovery
 and metadata-normalisation interface. The base class enforces robots.txt
 compliance and rate-limiting.
 """
+
 from __future__ import annotations
 
 import time

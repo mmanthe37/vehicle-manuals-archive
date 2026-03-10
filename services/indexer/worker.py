@@ -1,4 +1,5 @@
 """Indexer worker: consumes CDC events and upserts OpenSearch / pgvector."""
+
 from __future__ import annotations
 
 import asyncio
