@@ -1,4 +1,5 @@
 """Event bus: publish CDC events to Kafka and persist to Postgres."""
+
 from __future__ import annotations
 
 import json
@@ -17,6 +18,7 @@ class EventBus:
         if kafka_bootstrap:
             try:
                 from aiokafka import AIOKafkaProducer  # noqa: F401
+
                 self._kafka_bootstrap = kafka_bootstrap
             except ImportError:
                 self._kafka_bootstrap = None

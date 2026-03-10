@@ -1,4 +1,5 @@
 """Ingestion worker: consumes ingest jobs from Kafka topic and runs pipeline."""
+
 from __future__ import annotations
 
 import asyncio

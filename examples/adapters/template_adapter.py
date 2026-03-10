@@ -3,6 +3,7 @@
 Copy this file to services/ingestion/adapters/<oem_name>.py
 and implement the abstract methods.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterator

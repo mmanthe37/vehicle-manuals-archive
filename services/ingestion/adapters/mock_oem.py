@@ -3,6 +3,7 @@
 Simulates a fictional OEM site and returns fixture manuals including
 a Spanish-language 2012 Toyota Camry manual from the local test corpus.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -30,9 +31,7 @@ class MockOemAdapter(AdapterBase):
         yield ("toyota", "camry", 2012)
         yield ("honda", "civic", 2015)
 
-    def list_manual_links(
-        self, make: str, model: str, year: int
-    ) -> list[IngestRequest]:
+    def list_manual_links(self, make: str, model: str, year: int) -> list[IngestRequest]:
         results: list[IngestRequest] = []
         if (make, model, year) == ("toyota", "camry", 2012):
             results.append(

@@ -1,4 +1,5 @@
 """Core data schemas for OEM vehicle manuals."""
+
 from __future__ import annotations
 
 import enum

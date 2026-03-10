@@ -1,4 +1,5 @@
 """SQLAlchemy ORM models for vehicle-manuals-archive."""
+
 from __future__ import annotations
 
 import uuid

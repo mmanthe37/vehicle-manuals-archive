@@ -3,6 +3,7 @@
 This test exercises the full pipeline using local fixtures only (no live services).
 Marked as 'smoke' so it can be skipped in pure unit-test runs.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

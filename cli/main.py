@@ -1,4 +1,5 @@
 """vmw — Vehicle Manuals Warehouse admin CLI."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -104,13 +105,13 @@ def _run_mock_oem(dry_run: bool = False) -> None:
         try:
             result = pipeline.ingest(req, adapter=adapter)
             results.append(result)
-            console.print(
-                f"  [green]✓[/green] {result.logical_id} → {result.content_id[:16]}…"
-            )
+            console.print(f"  [green]✓[/green] {result.logical_id} → {result.content_id[:16]}…")
         except Exception as exc:
             console.print(f"  [red]✗[/red] {req.file_path or req.source_url}: {exc}")
 
-    console.print(f"\n[bold green]Ingestion complete.[/bold green] {len(results)}/{len(all_requests)} succeeded.")
+    console.print(
+        f"\n[bold green]Ingestion complete.[/bold green] {len(results)}/{len(all_requests)} succeeded."
+    )
     console.print("\n[cyan]Step 3:[/cyan] Parse, OCR, index skipped in local CLI mode.")
     console.print("  Run [bold]docker compose up[/bold] for full pipeline.")
 
@@ -165,7 +166,9 @@ def index_rebuild(
 
 
 @manual_app.command("link")
-def manual_link(content_id: str = typer.Argument(...), logical_id: str = typer.Argument(...)) -> None:
+def manual_link(
+    content_id: str = typer.Argument(...), logical_id: str = typer.Argument(...)
+) -> None:
     console.print(f"[green]Linked[/green] {content_id} → {logical_id}")
 
 

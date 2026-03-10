@@ -1,4 +1,5 @@
 """HTML parser: readability + BeautifulSoup."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

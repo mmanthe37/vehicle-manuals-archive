@@ -1,4 +1,5 @@
 """Unit tests for the ingestion pipeline (no I/O)."""
+
 from __future__ import annotations
 
 import hashlib
@@ -64,7 +65,9 @@ class TestIngestionPipeline:
         path = FIXTURE_DIR / "toyota_camry_2012_es.pdf"
         if not path.exists():
             pytest.skip("Fixture PDF not found")
-        req = IngestRequest(file_path=str(path), make="toyota", model="camry", year=2012, language="es")
+        req = IngestRequest(
+            file_path=str(path), make="toyota", model="camry", year=2012, language="es"
+        )
         pipeline = IngestionPipeline()
         r1 = pipeline.ingest(req)
         r2 = pipeline.ingest(req)

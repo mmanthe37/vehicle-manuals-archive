@@ -1,4 +1,5 @@
 """Tesseract OCR pipeline for image-heavy PDF pages."""
+
 from __future__ import annotations
 
 import io

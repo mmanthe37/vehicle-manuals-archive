@@ -1,4 +1,5 @@
 """Make/model/year normalisation dictionaries and alias maps."""
+
 from __future__ import annotations
 
 # Canonical make name → list of aliases (all lowercase)

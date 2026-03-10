@@ -8,6 +8,7 @@ mypy>=1.10
 types-requests
 # Services
 fastapi>=0.111
+python-multipart>=0.0.22
 uvicorn[standard]>=0.30
 grpcio>=1.64
 grpcio-tools>=1.64

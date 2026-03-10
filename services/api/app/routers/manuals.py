@@ -1,4 +1,5 @@
 """Manuals listing, retrieval, and download endpoints."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
